@@ -1,43 +1,98 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from './entities/coffee.entity';
+import { User } from './entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Language } from './entities/language.entity';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [
-    {
-      id: 1,
-      name: 'User 1',
-      email: 'johndoe@hotmail.com',
-    },
-  ];
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Language)
+    private readonly languageRepository: Repository<Language>,
+    private readonly dataSource: DataSource,
+  ) {}
 
-  findAll() {
-    return this.users;
+  findAll(paginationQuery: PaginationQueryDto) {
+    const { limit, offset } = paginationQuery;
+
+    return this.userRepository.find({
+      relations: { languages: true },
+      skip: offset,
+      take: limit,
+    });
   }
 
-  findOne(id: string) {
-    const coffee = this.users.find((item) => item.id === +id);
-    if (!coffee) {
+  async findOne(id: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: +id },
+      relations: { languages: true },
+    });
+    if (!user) {
       throw new NotFoundException(`User #${id} not found`);
     }
-    return coffee;
+    return user;
   }
 
-  create(createCoffeeDto: any) {
-    this.users.push(createCoffeeDto);
+  async create(createUserDto: CreateUserDto) {
+    const languages = await Promise.all(
+      createUserDto.languages.map((name) => this.preloadLanguageByName(name)),
+    );
+
+    const user = this.userRepository.create({ ...createUserDto, languages });
+    return this.userRepository.save(user);
   }
 
-  update(id: string, updateUserDto: any) {
-    const existingCoffee = this.findOne(id);
-    if (existingCoffee) {
-      // update the existing entity
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const languages =
+      updateUserDto.languages &&
+      (await Promise.all(
+        updateUserDto.languages.map((name) => this.preloadLanguageByName(name)),
+      ));
+
+    const user = await this.userRepository.preload({
+      id: +id,
+      ...updateUserDto,
+      languages,
+    });
+    if (!user) {
+      throw new NotFoundException(`User #${id} not found`);
+    }
+    return this.userRepository.save(user);
+  }
+
+  async remove(id: string) {
+    const user = await this.findOne(id);
+    return this.userRepository.remove(user);
+  }
+
+  async followUser(user: User) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      user.followers++;
+      await this.userRepository.save(user);
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
   }
 
-  remove(id: string) {
-    const coffeeIndex = this.users.findIndex((item) => item.id === +id);
-    if (coffeeIndex >= 0) {
-      this.users.splice(coffeeIndex, 1);
+  private async preloadLanguageByName(name: string): Promise<Language> {
+    const existingLanguage = await this.languageRepository.findOne({
+      where: { name },
+    });
+    if (existingLanguage) {
+      return existingLanguage;
     }
+    return this.languageRepository.create({ name });
   }
 }

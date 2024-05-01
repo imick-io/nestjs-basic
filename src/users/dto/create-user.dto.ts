@@ -6,4 +6,7 @@ export class CreateUserDto {
 
   @IsString()
   readonly email: string;
+
+  @IsString({ each: true })
+  readonly languages: string[];
 }
