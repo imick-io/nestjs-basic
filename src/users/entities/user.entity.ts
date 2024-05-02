@@ -18,9 +18,6 @@ export class User {
   @Column()
   email: string;
 
-  @Column()
-  role: string;
-
   @Column({ default: 0 })
   followers: number;
 
