@@ -56,21 +56,4 @@ export class UsersService {
     const user = await this.findOne(id);
     return this.userRepository.remove(user);
   }
-
-  async followUser(user: User) {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      user.followers++;
-      await this.userRepository.save(user);
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-    } finally {
-      await queryRunner.release();
-    }
-  }
 }

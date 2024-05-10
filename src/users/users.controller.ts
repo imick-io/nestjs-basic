@@ -14,11 +14,15 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { UserDto } from './dto/user.dto';
+import { AuthService } from './auth.service';
 
 @Controller('users')
 @Serialize(UserDto)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Get()
   findAll(@Query() paginationQuery: PaginationQueryDto) {
@@ -30,9 +34,14 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @Post('/signup')
+  signup(@Body() body: CreateUserDto) {
+    return this.authService.signUp(body.email, body.password);
+  }
+
+  @Post('/signin')
+  signin(@Body() body: CreateUserDto) {
+    return this.authService.signIn(body.email, body.password);
   }
 
   @Patch(':id')

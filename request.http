@@ -4,14 +4,22 @@ GET http://localhost:3000/users
 ### Get a user
 GET http://localhost:3000/users/1
 
-### Create a user
-POST http://localhost:3000/users
+### Signup a user
+POST http://localhost:3000/users/signup
 content-type: application/json
 
 {
-  "name": "Jane Doe",
-  "email": "janedoe@hotmail.com",
-  "languages": ["english"]
+  "email": "johndoe@hotmail.com",
+  "password": "pass-123"
+}
+
+### Signin a user
+POST http://localhost:3000/users/signin
+content-type: application/json
+
+{
+  "email": "johndoe@hotmail.com",
+  "password": "pass-1234"
 }
 
 ### Update a user
