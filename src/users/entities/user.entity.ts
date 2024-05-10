@@ -1,11 +1,11 @@
 import {
+  AfterInsert,
+  AfterRemove,
+  AfterUpdate,
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Language } from './language.entity';
 
 @Entity() // table: user
 export class User {
@@ -13,15 +13,24 @@ export class User {
   id: number;
 
   @Column()
-  name: string;
-
-  @Column()
   email: string;
 
-  @Column({ default: 0 })
-  followers: number;
+  @Column()
+  password: string;
 
-  @JoinTable()
-  @ManyToMany(() => Language, (language) => language.users, { cascade: true })
-  languages: Language[];
+  // Events
+  @AfterInsert()
+  logInsert() {
+    console.log('Inserted User with id', this.id);
+  }
+
+  @AfterUpdate()
+  logUpdate() {
+    console.log('Updated User with id', this.id);
+  }
+
+  @AfterRemove()
+  logRemove() {
+    console.log('Removed User with id', this.id);
+  }
 }

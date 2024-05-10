@@ -1,4 +1,3 @@
-import { Language } from 'src/users/entities/language.entity';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource } from 'typeorm';
 
@@ -9,6 +8,6 @@ export default new DataSource({
   username: 'postgres',
   password: 'postgres',
   database: 'postgres',
-  entities: [User, Language],
+  entities: [User],
   migrations: [],
 });

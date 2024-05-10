@@ -4,15 +4,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Language } from './entities/language.entity';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(Language)
-    private readonly languageRepository: Repository<Language>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -20,7 +17,6 @@ export class UsersService {
     const { limit, offset } = paginationQuery;
 
     return this.userRepository.find({
-      relations: { languages: true },
       skip: offset,
       take: limit,
     });
@@ -29,7 +25,6 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.userRepository.findOne({
       where: { id: +id },
-      relations: { languages: true },
     });
     if (!user) {
       throw new NotFoundException(`User #${id} not found`);
@@ -37,26 +32,19 @@ export class UsersService {
     return user;
   }
 
-  async create(createUserDto: CreateUserDto) {
-    const languages = await Promise.all(
-      createUserDto.languages.map((name) => this.preloadLanguageByName(name)),
-    );
+  find(email: string) {
+    return this.userRepository.findOne({ where: { email } });
+  }
 
-    const user = this.userRepository.create({ ...createUserDto, languages });
+  async create(createUserDto: CreateUserDto) {
+    const user = this.userRepository.create({ ...createUserDto });
     return this.userRepository.save(user);
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const languages =
-      updateUserDto.languages &&
-      (await Promise.all(
-        updateUserDto.languages.map((name) => this.preloadLanguageByName(name)),
-      ));
-
     const user = await this.userRepository.preload({
       id: +id,
       ...updateUserDto,
-      languages,
     });
     if (!user) {
       throw new NotFoundException(`User #${id} not found`);
@@ -84,15 +72,5 @@ export class UsersService {
     } finally {
       await queryRunner.release();
     }
-  }
-
-  private async preloadLanguageByName(name: string): Promise<Language> {
-    const existingLanguage = await this.languageRepository.findOne({
-      where: { name },
-    });
-    if (existingLanguage) {
-      return existingLanguage;
-    }
-    return this.languageRepository.create({ name });
   }
 }
