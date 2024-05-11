@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -23,6 +27,11 @@ export class UsersService {
   }
 
   async findOne(id: string) {
+    const idNumber = +id;
+    if (!idNumber || isNaN(idNumber)) {
+      throw new BadRequestException('Invalid id');
+    }
+
     const user = await this.userRepository.findOne({
       where: { id: +id },
     });
