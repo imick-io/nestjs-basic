@@ -1,9 +1,11 @@
+import { Post } from 'src/posts/post.entity';
 import {
   AfterInsert,
   AfterRemove,
   AfterUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -17,6 +19,12 @@ export class User {
 
   @Column()
   password: string;
+
+  @Column({ default: true })
+  isAdmin: boolean;
+
+  @OneToMany(() => Post, (post) => post.user, { cascade: true })
+  posts: Post[];
 
   // Events
   @AfterInsert()

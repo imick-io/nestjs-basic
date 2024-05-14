@@ -1,0 +1,19 @@
+### Create a new post
+POST http://localhost:3000/posts
+Content-Type: application/json
+
+{
+    "title": "My other post",
+    "content": "This is a new post"
+}
+
+### Approve an existing post
+PATCH http://localhost:3000/posts/6
+Content-Type: application/json
+
+{
+    "approved": true
+}
+
+### Get a specific post by title
+GET http://localhost:3000/posts?title=My%20other%20post
